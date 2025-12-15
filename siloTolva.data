@@ -1,0 +1,22 @@
+20.0 60.0 0.11		# Dimensiones del silo (cm): Ancho; Alto; Espesor
+1.0 2.0 		# Diametro del orificio (cm); Gap del orificio (cm)
+00.0			# Ángulo de la tolva (°);
+1000000			# Número de granos
+0			# ¿Polidisperso?; Bidisperso: 0
+0.1	 		# Diametro mínimo de grano (cm);
+0.1			# Diametro máximo de grano (cm);
+7.52 7.52 2.4		# Densidad (gr/cm3): Grano; Pared; Plano
+1.0e-04			# Tiempo de colisión (s)
+0.92 0.5		# Grano-Grano: Epsilon, Mu_s
+0.92 0.5		# Grano-Pared: Epsilon, Mu_s
+0.92 0.18		# Grano-Plano: Epsilon, Mu_s
+0.2 0.2 1.0		# Razón: kappa_t/kappa_n; gamma_t/gamma_n; Mu_d/Mu_s
+1.0e-06			# dt (s)
+1000			# Frecuencia de las mediciones (Hz)
+0.01			# Tiempo de simulación (s)
+0.0			# Tiempo transiente (s)
+10.0			# Velocidad inicial (cm/s)
+5.0			# Ancho de la ventana de medición (cm)
+1			# ¿Imprimir snapshots?
+123456			# Semilla para números aleatorios
+1024			# Número de bins en el orificio
