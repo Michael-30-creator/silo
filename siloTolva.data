@@ -1,7 +1,7 @@
 20.0 60.0 0.11		# Dimensiones del silo (cm): Ancho; Alto; Espesor
 1.0 2.0 		# Diametro del orificio (cm); Gap del orificio (cm)
 00.0			# Ángulo de la tolva (°);
-1000000			# Número de granos
+1000			# Número de granos
 0			# ¿Polidisperso?; Bidisperso: 0
 0.1	 		# Diametro mínimo de grano (cm);
 0.1			# Diametro máximo de grano (cm);
