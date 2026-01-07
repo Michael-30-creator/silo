@@ -412,26 +412,30 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 				}
 
 				/*+*+*+*+* GRAIN-FLOOR +*+*+*+*/
-//				if (bb == ngrains + 8)
-//				{
-//					rrb.x = rra.x;
-//					rrb.y = rra.y;
-//					rrb.z = 0.0;
+				if (!pars.tapOpen && bb == ngrains + 8)
+				{
+					kappa = kappa_gp;
+					gamma = gamma_gp;
+					mu = mu_gp;
 
-//					dist = rra.z;
-//					if (dist >= rad_a) continue;
-//					comp = rad_a - dist;
+					rrb.x = rra.x;
+					rrb.y = rra.y;
+					rrb.z = 0.0;
 
-//					nn.x = 0.0;
-//					nn.y = 0.0;
-//					nn.z = -1.0;
+					dist = rra.z;
+					if (dist >= rad_a) continue;
+					comp = rad_a - dist;
 
-//					rrc.x = rra.x;
-//					rrc.y = rra.y;
-//					rrc.z = 0.0;
+					nn.x = 0.0;
+					nn.y = 0.0;
+					nn.z = -1.0;
 
-//					goto FUERZA_TORQUE;
-//				}
+					rrc.x = rra.x;
+					rrc.y = rra.y;
+					rrc.z = 0.0;
+
+					goto FUERZA_TORQUE;
+				}
 
 				kappa = kappa_gp;
 				gamma = gamma_gp;

@@ -232,18 +232,18 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 
 		/*+*+*+*+*+*+*+* GRAIN-FLOOR +*+*+*+*+*+*+*/
 
-//		if (jj == 0)
-//		{
-//			dist = rra.z;
-//			if (dist < rad_a)
-//			{
-//					// Contact
-//					bb = ngrains + 8;
-//					indCntc = indCntc_init + nCntc;
-//					tagCntcVec[indCntc] = bb;
-//					nCntc++;
-//			}
-//		}
+		if (!pars.tapOpen && jj == 0)
+		{
+			dist = rra.z;
+			if (dist < rad_a)
+			{
+					// Contact
+					bb = ngrains + 8;
+					indCntc = indCntc_init + nCntc;
+					tagCntcVec[indCntc] = bb;
+					nCntc++;
+			}
+		}
 
 		/*+*+*+*+*+*+*+*+*+* GRAIN-GRAIN +*+*+*+*+*+*+*+*+*/
 

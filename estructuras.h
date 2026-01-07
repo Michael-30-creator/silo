@@ -6,6 +6,7 @@ typedef struct
 	double rad;
 	double mass;
 	double inertia;
+	int lot_id;
 } 
 grain_prop;
 
@@ -55,5 +56,8 @@ typedef struct
 	double binSize;
 	double bottGap;
 	double winWidth;
+	int tapOpen;
+	double tapOpenTime;
+	long dischargeTarget;
 }
 parameters;

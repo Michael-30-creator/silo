@@ -10,6 +10,7 @@
 
 #define DIAMS 1.2
 #define THS_MAX 256
+#define MAX_LOTS 3
 
 // Define this to turn on error checking
 //#define CUDA_ERROR_CHECK
@@ -78,6 +79,14 @@ __global__ void getVVprof(double3*, double3*, int*, double*,
 
 // Uniform random number generator between 0.0 and 1.0
 double rannew64(long*);
+
+typedef struct
+{
+	int lot_id;
+	long count;
+	double spawn_time;
+	double3 spawn_pos;
+} lot_cfg;
 
 /*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*/
 
@@ -257,11 +266,15 @@ int main()
 		bottGap, diamMin, diamMax, rho_g, rho_w, rho_p,
 		tColl, eps_gg, mu_gg, eps_gw, mu_gw, eps_gp, mu_gp,
 		xk_tn, xg_tn, xmu_ds, dt, gapFreq, tRun, tTrans, v0,
-		winWidth;
+		winWidth, tapOpenTime;
 	long ngrains, idum, nBinsHop;
+	long dischargeTarget;
 	int polyFlag, snapFlag, err_flag = 0;
 	char renglon[200];
 	struct stat dirStat;
+	lot_cfg lots[MAX_LOTS];
+	int lot_count = 0;
+	long lots_total = 0;
 
 	// Silo width; Silo height
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
@@ -355,6 +368,79 @@ int main()
 	{
 		printf("Error en el archivo (.data) de parÃ¡metros.\n");
 		exit (1);
+	}
+
+	{
+		const char *lotsPath = "lots.data";
+		FILE *fLots = fopen(lotsPath, "r");
+		int header_read = 0;
+
+		if (!fLots)
+		{
+			printf("Error: no se pudo abrir %s\n", lotsPath);
+			exit (1);
+		}
+
+		while (fgets(renglon, sizeof(renglon), fLots) != NULL)
+		{
+			if (renglon[0] == '#' || renglon[0] == '\n' || renglon[0] == '\r')
+				continue;
+
+			if (!header_read)
+			{
+				if (sscanf(renglon, "%lf %ld", &tapOpenTime,
+						&dischargeTarget) != 2)
+				{
+					printf("Error: formato invalido en %s\n", lotsPath);
+					exit (1);
+				}
+				header_read = 1;
+				continue;
+			}
+
+			if (lot_count >= MAX_LOTS)
+			{
+				printf("Error: demasiados lotes en %s (max %d)\n",
+					lotsPath, MAX_LOTS);
+				exit (1);
+			}
+
+			if (sscanf(renglon, "%d %ld %lf %lf %lf %lf",
+					&lots[lot_count].lot_id,
+					&lots[lot_count].count,
+					&lots[lot_count].spawn_time,
+					&lots[lot_count].spawn_pos.x,
+					&lots[lot_count].spawn_pos.y,
+					&lots[lot_count].spawn_pos.z) != 6)
+			{
+				printf("Error: formato invalido en %s\n", lotsPath);
+				exit (1);
+			}
+
+			if (lots[lot_count].lot_id < 1 || lots[lot_count].lot_id > 3)
+			{
+				printf("Error: lot_id fuera de rango en %s\n", lotsPath);
+				exit (1);
+			}
+
+			lots_total += lots[lot_count].count;
+			lot_count++;
+		}
+
+		fclose(fLots);
+
+		if (!header_read)
+		{
+			printf("Error: encabezado faltante en %s\n", lotsPath);
+			exit (1);
+		}
+
+		if (lots_total != ngrains)
+		{
+			printf("Error: la suma de lotes (%ld) no coincide con ngrains (%ld)\n",
+				lots_total, ngrains);
+			exit (1);
+		}
 	}
 
 	if (siloThick < diamMax)
@@ -468,68 +554,72 @@ int main()
 	pars.radMax = radMax;
 	pars.bottGap = bottGap;
 	pars.winWidth = winWidth;
+	pars.tapOpen = 0;
+	pars.tapOpenTime = tapOpenTime;
+	pars.dischargeTarget = dischargeTarget;
 
 	/*+*+*+*+*+*+*+*+*+*+*+*+*+ INITIAL STATE +*+*+*+*+*+*+*+*+*+*+*+*+*/
 
 	double3 *rrVec, *vvVec;
 	double3 *wwVec;
-	double xx, zz, shift, xxInit, zzInit, xxFin, zzFin, theta, phi;
-	long rowCounter;
+	double *spawnTime;
+	double3 *spawnPos;
+	int *grainState;
+	double theta, phi, jitter, xj, yj, zj;
+	long lot_idx, lot_fill;
 
 	// Get CPU-GPU memory in UNIFIED MEMORY
 	cudaSafeCall(cudaMallocManaged(&rrVec, ngrains*sizeof(double3)));
 	cudaSafeCall(cudaMallocManaged(&vvVec, ngrains*sizeof(double3)));
 	cudaSafeCall(cudaMallocManaged(&wwVec, ngrains*sizeof(double3)));
 
-	// Grains are initially placed in the silo.
-	zz = siloInit;
-	shift = 1.05*radMax;
-	xxInit = shift;
-	xxFin = siloWidth - shift;
-	zzInit = 2.8*shift;
-	zzFin = siloInit + siloHeight - shift;
-	xx = xxInit;
-	zz += zzInit;
-
-	// Perform an initial fill in hexagonal packing
-	mm = 0;
-	rowCounter = 0;
-
-	while (1)
+	spawnTime = (double *) malloc(ngrains*sizeof(double));
+	spawnPos = (double3 *) malloc(ngrains*sizeof(double3));
+	grainState = (int *) malloc(ngrains*sizeof(int));
+	if (!spawnTime || !spawnPos || !grainState)
 	{
-		rrVec[mm].x = xx;
-		rrVec[mm].y = 0.0;
-		rrVec[mm].z = zz;
+		printf("Error: memoria insuficiente para lotes\n");
+		exit (3);
+	}
 
-		phi = 2.0*PI*rannew64(&idum);
-		theta = PI*rannew64(&idum);
-		vvVec[mm].x = v0*cos(phi)*sin(theta);
-		vvVec[mm].y = v0*sin(phi)*sin(theta);
-		vvVec[mm].z = v0*cos(theta);
+	lot_fill = 0;
+	for (lot_idx=0; lot_idx<lot_count; lot_idx++)
+	{
+		for (mm=0; mm<lots[lot_idx].count; mm++)
+		{
+			if (lot_fill >= ngrains)
+			{
+				printf("Error: demasiados granos en lotes\n");
+				exit (3);
+			}
+
+			grainVec[lot_fill].lot_id = lots[lot_idx].lot_id;
+			spawnTime[lot_fill] = lots[lot_idx].spawn_time;
+			spawnPos[lot_fill] = lots[lot_idx].spawn_pos;
+			grainState[lot_fill] = 0;
+			lot_fill++;
+		}
+	}
+
+	if (lot_fill != ngrains)
+	{
+		printf("Error: granos sin asignar a lotes\n");
+		exit (3);
+	}
+
+	for (mm=0; mm<ngrains; mm++)
+	{
+		rrVec[mm].x = 0.0;
+		rrVec[mm].y = 0.0;
+		rrVec[mm].z = -1.0;
+
+		vvVec[mm].x = 0.0;
+		vvVec[mm].y = 0.0;
+		vvVec[mm].z = 0.0;
 
 		wwVec[mm].x = 0.0;
 		wwVec[mm].y = 0.0;
 		wwVec[mm].z = 0.0;
-
-		mm++;
-		if (mm == ngrains) break;
-
-		// New point
-		xx += 2.0*shift;
-
-		if (xx < xxFin) continue;
-
-		zz += 1.74*shift;
-		rowCounter++;
-		if (rowCounter%2 == 0) xx = xxInit;
-		else xx = xxInit + shift;
-
-		if (zz > zzFin)
-		{
-			printf("Error: el nÃºmero mÃ¡ximo de granos "
-				"para este sistema es %ld\n", mm);
-			exit (3);
-		}
 	}
 
 	// Open files
@@ -599,6 +689,8 @@ int main()
 	double time, totTime, binSize, timeOld, clogTime;
 	long qflow = 0;
 	int flag, flagFin = 0;
+	long lotDischarged[4] = {0, 0, 0, 0};
+	long totalDischarged = 0;
 
 	// Compute number of blocks and threads
 	ths = (ngrains < THS_MAX) ? nextPow2(ngrains) : THS_MAX;
@@ -618,6 +710,7 @@ int main()
 	totTime = nIter*dt;
 	timeOld = 0.0;
 	clogTime = 0.0;
+	pars.tapOpen = (time >= pars.tapOpenTime) ? 1 : 0;
 
 	// Compute the size of the orifice bins
 	binSize = hopWidth/(double) nBinsHop;
@@ -677,6 +770,46 @@ int main()
 	{
 		flag = abs(ni)%nGap;
 
+		pars.tapOpen = (time >= pars.tapOpenTime) ? 1 : 0;
+
+		jitter = 0.25*radMax;
+		for (mm=0; mm<ngrains; mm++)
+		{
+			if (grainState[mm] != 0) continue;
+			if (time < spawnTime[mm]) continue;
+
+			xj = (rannew64(&idum) - 0.5)*2.0*jitter;
+			yj = (rannew64(&idum) - 0.5)*2.0*jitter;
+			zj = (rannew64(&idum) - 0.5)*2.0*jitter;
+
+			rrVec[mm].x = spawnPos[mm].x + xj;
+			rrVec[mm].y = spawnPos[mm].y + yj;
+			rrVec[mm].z = spawnPos[mm].z + zj;
+
+			if (rrVec[mm].x < radMax) rrVec[mm].x = radMax;
+			if (rrVec[mm].x > siloWidth - radMax)
+				rrVec[mm].x = siloWidth - radMax;
+			if (rrVec[mm].y < -0.5*siloThick + radMax)
+				rrVec[mm].y = -0.5*siloThick + radMax;
+			if (rrVec[mm].y > 0.5*siloThick - radMax)
+				rrVec[mm].y = 0.5*siloThick - radMax;
+			if (rrVec[mm].z < radMax) rrVec[mm].z = radMax;
+			if (rrVec[mm].z > siloInit + siloHeight - radMax)
+				rrVec[mm].z = siloInit + siloHeight - radMax;
+
+			phi = 2.0*PI*rannew64(&idum);
+			theta = PI*rannew64(&idum);
+			vvVec[mm].x = v0*cos(phi)*sin(theta);
+			vvVec[mm].y = v0*sin(phi)*sin(theta);
+			vvVec[mm].z = v0*cos(theta);
+
+			wwVec[mm].x = 0.0;
+			wwVec[mm].y = 0.0;
+			wwVec[mm].z = 0.0;
+
+			grainState[mm] = 1;
+		}
+
 		verletInit<<<blks, ths>>>(rrVec, vvVec, wwVec, d_ffOldVec,
 			d_ttOldVec, grainVec, pars, d_idxReport);
 		cudaCheckError();
@@ -717,6 +850,28 @@ int main()
 
 		// Advance time and update
 		time += dt;
+
+		pars.tapOpen = (time >= pars.tapOpenTime) ? 1 : 0;
+		if (pars.tapOpen)
+		{
+			for (mm=0; mm<ngrains; mm++)
+			{
+				if (grainState[mm] != 1) continue;
+				if (rrVec[mm].z >= 0.0) continue;
+
+				grainState[mm] = 2;
+				totalDischarged++;
+				if (grainVec[mm].lot_id >= 1 && grainVec[mm].lot_id <= 3)
+					lotDischarged[grainVec[mm].lot_id]++;
+			}
+		}
+
+		if (pars.dischargeTarget > 0 &&
+			totalDischarged >= pars.dischargeTarget)
+		{
+			printf("DESCARGA COMPLETA (%ld granos)\n", totalDischarged);
+			break;
+		}
 
 		if (!flag)
 		{
@@ -783,7 +938,7 @@ int main()
 	/*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+ FINALIZE +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*/
 
 	double xx_b, xcount, rrx_p, vvz_p;
-	FILE *fPhi, *fVVprf, *fSnap_fin;
+	FILE *fPhi, *fVVprf, *fSnap_fin, *fLotsOut;
 
 	fPhi = fopen("phiHist.dat", "w");
 	fprintf(fPhi, "# rrxOrif\tphi\n");
@@ -814,12 +969,19 @@ int main()
 	fSnap_fin = fopen("last_snapshot.xyz", "w");
 	xyzOvPrint(fSnap_fin, grainVec, rrVec, radMin, radMax, pars);
 
+	fLotsOut = fopen("lot_discharge.dat", "w");
+	fprintf(fLotsOut, "# lot_id\tcount\n");
+	for (mm=1; mm<=3; mm++)
+		fprintf(fLotsOut, "%ld\t%ld\n", mm, lotDischarged[mm]);
+	fprintf(fLotsOut, "# total\t%ld\n", totalDischarged);
+
 	// Close files
 	fclose(fBit);
 	if (snapFlag) fclose(fSnap);
 	fclose(fPhi);
 	fclose(fVVprf);
 	fclose(fSnap_fin);
+	fclose(fLotsOut);
 	fclose(fQflow);
 
 	// Free memory
@@ -843,11 +1005,15 @@ int main()
 	cudaFree(d_ttOldVec);
 	cudaFree(nCntcVec);
 	cudaFree(d_rrTolvVec);
+	free(spawnTime);
+	free(spawnPos);
+	free(grainState);
 
 	printf("TERMINADO\n");
 
 	exit (0);
 }
+
 
 
 

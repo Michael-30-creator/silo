@@ -1,0 +1,6 @@
+# tap_open_time(s) discharge_target(grains)
+0.50 200
+# lot_id count spawn_time(s) x y z (cm)
+1 500 0.00 10.0 0.0 55.0
+2 300 0.20 10.0 0.0 55.0
+3 200 0.40 10.0 0.0 55.0
