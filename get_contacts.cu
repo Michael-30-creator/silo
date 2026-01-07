@@ -1,4 +1,4 @@
-#include "estructuras.h"
+﻿#include "estructuras.h"
 
 __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			long *cellVec, long *nOcupVec, long *nCntcVec,
@@ -43,7 +43,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 		jj = (long)(rra.z/cellSide_z);
 		if (jj == nCell_z) jj--;
 
-		/*+*+*+*+*+*+*+* GRANO-PARED_IZQUIERDA +*+*+*+*+*+*+*/
+		/*+*+*+*+*+*+*+* GRAIN-LEFT_WALL +*+*+*+*+*+*+*/
 
 		if (ii == 0)
 		{
@@ -51,7 +51,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 
 			if (dist < rad_a)
 			{
-				//Contacto
+				// Contact
 				bb = ngrains + 1;
 				indCntc = indCntc_init + nCntc;
 				tagCntcVec[indCntc] = bb;
@@ -59,7 +59,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			}
 		}
 
-		/*+*+*+*+*+*+*+* GRANO-PARED_DERECHA +*+*+*+*+*+*+*/
+		/*+*+*+*+*+*+*+* GRAIN-RIGHT_WALL +*+*+*+*+*+*+*/
 
 		siloWidth = pars.siloWidth;
 
@@ -69,7 +69,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 
 			if (dist < rad_a)
 			{
-				//Contacto
+				// Contact
 				bb = ngrains + 2;
 				indCntc = indCntc_init + nCntc;
 				tagCntcVec[indCntc] = bb;
@@ -77,7 +77,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			}
 		}
 
-		/*+*+*+*+*+*+*+* GRANO-TOLVA +*+*+*+*+*+*+*/
+		/*+*+*+*+*+*+*+* GRAIN-HOPPER +*+*+*+*+*+*+*/
 
 		siloInit = pars.siloInit;
 		hopLength = pars.hopLength;
@@ -86,40 +86,40 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 
 		if (rra.z < siloInit + rad_a)
 		{
-			// Coordenada z del punto final del hopper
+			// Z coordinate of the hopper end point
 			hop.z = -hopLength*sin(hopAngR);
 
 			if (rra.z > siloInit + hop.z - rad_a)
 			{
-				/*+*+*+*+*+*+*+ IZQUIERDA *+*+*+*+*+*+*/
+				/*+*+*+*+*+*+*+ LEFT *+*+*+*+*+*+*/
 
-				// Coordenada x del punto final del hopper
+				// X coordinate of the hopper end point
 				hop.x = 0.5*(siloWidth - hopWidth);
 
 				if (rra.x < hop.x + rad_a)
 				{
-					// Pone el grano con referencia
-					// al punto inicial del hopper
+					// Reference the grain
+					// to the hopper start point
 					rrah.x = rra.x;
 					rrah.z = rra.z - siloInit;
 
-					// Pruducto punto
+					// Dot product
 					dot = rrah.x*hop.x + rrah.z*hop.z;
 					param = dot/(hopLength*hopLength);
 
 					if (param < 0.0) param = 0.0;
 					if (param > 1.0) param = 1.0;
 
-					// Punto mas cercano al grano
+					// Closest point to the grain
 					rrbh.x = param*hop.x;
 					rrbh.z = param*hop.z;
 
-					// Pone en el origen de coordenadas
+					// Shift to origin coordinates
 					rrb.x = rrbh.x;
 					rrb.y = rra.y;
 					rrb.z = rrbh.z + siloInit;
 
-					// Ahora checa distancias
+					// Now check distances
 					drr.x = rrb.x - rra.x;
 					drr.y = rrb.y - rra.y;
 					drr.z = rrb.z - rra.z;
@@ -127,7 +127,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 
 					if (dist2 < rad_a*rad_a)
 					{
-						//Contacto
+						// Contact
 						bb = ngrains + 3;
 						rrTolvVec[ind] = rrb;
 						indCntc = indCntc_init + nCntc;
@@ -136,35 +136,35 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 					}
 				}
 
-				/*+*+*+*+*+*+*+* DERECHA +*+*+*+*+*+*+*/
+				/*+*+*+*+*+*+*+* RIGHT +*+*+*+*+*+*+*/
 
-				// Coordenada x del punto final del hopper
+				// X coordinate of the hopper end point
 				hop.x = -hop.x;
 
 				if (rra.x > siloWidth + hop.x - rad_a)
 				{
-					// Pone el grano con referencia
-					// al punto inicial del hopper
+					// Reference the grain
+					// to the hopper start point
 					rrah.x = rra.x - siloWidth;
 					rrah.z = rra.z - siloInit;
 
-					// Pruducto punto
+					// Dot product
 					dot = rrah.x*hop.x + rrah.z*hop.z;
 					param = dot/(hopLength*hopLength);
 
 					if (param < 0.0) param = 0.0;
 					if (param > 1.0) param = 1.0;
 
-					// Punto mas cercano al granos
+					// Closest point to the grain
 					rrbh.x = param*hop.x;
 					rrbh.z = param*hop.z;
 
-					// Pone en el origen de coordenadas
+					// Shift to origin coordinates
 					rrb.x = rrbh.x + siloWidth;
 					rrb.y = rra.y;
 					rrb.z = rrbh.z + siloInit;
 
-					// Ahora checa distancias
+					// Now check distances
 					drr.x = rrb.x - rra.x;
 					drr.y = rrb.y - rra.y;
 					drr.z = rrb.z - rra.z;
@@ -172,7 +172,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 
 					if (dist2 < rad_a*rad_a)
 					{
-						//Contacto
+						// Contact
 						bb = ngrains + 4;
 						rrTolvVec[ind] = rrb;
 						indCntc = indCntc_init + nCntc;
@@ -183,7 +183,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			}
 		}
 
-		/*+*+*+*+*+*+*+* GRANO-PLANO_POSTERIOR +*+*+*+*+*+*+*/
+		/*+*+*+*+*+*+*+* GRAIN-REAR_PLANE +*+*+*+*+*+*+*/
 
 		h_siloThick = 0.5*pars.siloThick;
 		if (rra.y >= 0.0)
@@ -191,7 +191,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			dist = h_siloThick - rra.y;
 			if (dist < rad_a)
 			{
-				//Contacto
+				// Contact
 				bb = ngrains + 5;
 				indCntc = indCntc_init + nCntc;
 				tagCntcVec[indCntc] = bb;
@@ -199,14 +199,14 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			}
 		}
 
-		/*+*+*+*+*+*+*+* GRANO-PLANO_FRONTAL +*+*+*+*+*+*+*/
+		/*+*+*+*+*+*+*+* GRAIN-FRONT_PLANE +*+*+*+*+*+*+*/
 
 		if (rra.y <= 0.0)
 		{
 			dist = h_siloThick + rra.y;
 			if (dist < rad_a)
 			{
-				//Contacto
+				// Contact
 				bb = ngrains + 6;
 				indCntc = indCntc_init + nCntc;
 				tagCntcVec[indCntc] = bb;
@@ -214,7 +214,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			}
 		}
 
-		/*+*+*+*+*+*+*+* GRANO-TECHO +*+*+*+*+*+*+*/
+		/*+*+*+*+*+*+*+* GRAIN-CEILING +*+*+*+*+*+*+*/
 
 		siloHeight = pars.siloHeight;
 		if (jj == nCell_z - 1)
@@ -222,7 +222,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			dist = siloInit + siloHeight - rra.z;
 			if (dist < rad_a)
 			{
-					//Contacto
+					// Contact
 					bb = ngrains + 7;
 					indCntc = indCntc_init + nCntc;
 					tagCntcVec[indCntc] = bb;
@@ -230,14 +230,14 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			}
 		}
 
-		/*+*+*+*+*+*+*+* GRANO-PISO +*+*+*+*+*+*+*/
+		/*+*+*+*+*+*+*+* GRAIN-FLOOR +*+*+*+*+*+*+*/
 
 //		if (jj == 0)
 //		{
 //			dist = rra.z;
 //			if (dist < rad_a)
 //			{
-//					//Contacto
+//					// Contact
 //					bb = ngrains + 8;
 //					indCntc = indCntc_init + nCntc;
 //					tagCntcVec[indCntc] = bb;
@@ -245,11 +245,11 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 //			}
 //		}
 
-		/*+*+*+*+*+*+*+*+*+* GRANO-GRANO +*+*+*+*+*+*+*+*+*/
+		/*+*+*+*+*+*+*+*+*+* GRAIN-GRAIN +*+*+*+*+*+*+*+*+*/
 
 		nTags = pars.nTags;
 
-		// Checa las 9 celdas del vecindario, si existen
+		// Check the 9 neighboring cells, if they exist
 		for (idel=-1; idel<=1; idel++)
 		for (jdel=-1; jdel<=1; jdel++) 
 		{ 
@@ -258,7 +258,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 			jjb = jj + jdel;
 			if (jjb < 0 || jjb >= nCell_z) continue;
 
-			// Busca los granos vecinos
+			// Search neighboring grains
 			idx = iib + jjb*nCell_x;
 			tag_init = idx*nTags;
 			tag_end = tag_init + nOcupVec[idx];
@@ -274,7 +274,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 				sum_radii = rad_a + rad_b;
 				sum_radii2 = sum_radii*sum_radii;
 
-				// Checa distancias
+				// Check distances
 				drr.x = rrb.x - rra.x;
 				drr.y = rrb.y - rra.y;
 				drr.z = rrb.z - rra.z;
@@ -282,7 +282,7 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 
 				if (dist2 >= sum_radii2) continue;
 
-				//Contacto
+				// Contact
 				indCntc = indCntc_init + nCntc;
 				tagCntcVec[indCntc] = bb;
 				nCntc++;
@@ -294,3 +294,6 @@ __global__ void getContacts(double3 *rrVec, grain_prop *grainVec,
 
 	return;
 }
+
+
+

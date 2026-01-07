@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -76,7 +76,7 @@ __global__ void getPhi(double3*, grain_prop*, long*, long*, long*,
 __global__ void getVVprof(double3*, double3*, int*, double*,
 		double*, long, double, double);
 
-// Generador de números aleatorios uniformes entre 0.0 a 1.0
+// Uniform random number generator between 0.0 and 1.0
 double rannew64(long*);
 
 /*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*/
@@ -109,14 +109,14 @@ void xyzOvPrint(FILE *fSnap, grain_prop *grainVec, double3 *rrVec, double radMin
 		flag_init = 0;
 	}
 
-	// Imprime en formato .xyz para Ovito
+	// Print in .xyz format for Ovito
 	fprintf(fSnap, "%ld\n", npart + 6);
 	fprintf(fSnap, "Lattice=");
 	fprintf(fSnap, "\"%.2f 0.00 0.00 ", siloWidth);
 	fprintf(fSnap, "0.00 %.2f 0.00 ", siloThick);
 	fprintf(fSnap, "0.00 0.00 %.2f\"\n", boxDim);
 
-	// Imprime vertices
+	// Print vertices
 	molType = 0;
 	partType = 0;
 	fprintf(fSnap, "%f\t%f\t%f\t%f\t%d\t%d\n", 0.2*radMin,
@@ -134,7 +134,7 @@ void xyzOvPrint(FILE *fSnap, grain_prop *grainVec, double3 *rrVec, double radMin
 	fprintf(fSnap, "%f\t%f\t%f\t%f\t%d\t%d\n", 0.2*radMin,
 		0.5*(siloWidth + hopWidth), 0.5*siloThick, hopH, molType, partType);
 
-	// Imprime granos
+	// Print grains
 	molType = 2;
 	for (mm=0; mm<ngrains; mm++)
 	{
@@ -186,7 +186,7 @@ int dataPrint(grain_prop *grainVec, double3 *rrVec, double3 *vvVec, double3 *wwV
 	winWidth = pars.winWidth;
 	siloWidth = pars.siloWidth;
 
-	// Imprime granos
+	// Print grains
 	npart = 0;
 	for (ii=0; ii<ngrains; ii++)
 	{
@@ -235,7 +235,7 @@ int dataPrint(grain_prop *grainVec, double3 *rrVec, double3 *vvVec, double3 *wwV
 
 /*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*/
 
-// Encuentra la siguiente potencia de dos
+// Find the next power of two
 long nextPow2(long x)
 {
     --x;
@@ -251,7 +251,7 @@ long nextPow2(long x)
 
 int main()
 {
-	/*+*+*+*+*+*+*+*+*+*+*+*+*+ PARÁMETROS +*+*+*+*+*+*+*+*+*+*+*+*+*/
+	/*+*+*+*+*+*+*+*+*+*+*+*+*+ PARÃMETROS +*+*+*+*+*+*+*+*+*+*+*+*+*/
 
 	double siloWidth, siloHeight, siloThick, hopWidth, hopAng,
 		bottGap, diamMin, diamMax, rho_g, rho_w, rho_p,
@@ -263,110 +263,110 @@ int main()
 	char renglon[200];
 	struct stat dirStat;
 
-	// Ancho del silo; Altura del silo
+	// Silo width; Silo height
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
         else sscanf(renglon, "%lf %lf %lf", &siloWidth, &siloHeight, &siloThick);
 
-	// Ancho del orificio; Ángulo de la tolva; Gap del orificio
+	// Orifice width; Hopper angle; Orifice gap
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
         else sscanf(renglon, "%lf %lf", &hopWidth, &bottGap);
 
-	// Ángulo de la tolva
+	// Hopper angle
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
         else sscanf(renglon, "%lf", &hopAng);
 
-	// Número de granos
+	// Number of grains
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%ld", &ngrains);
 
-	// ¿Polidispersidad?
+	// Polydispersity?
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%d", &polyFlag);
 
-	// Radio de grano
+	// Grain radius
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf", &diamMin);
 
-	// Diferencia de radios
+	// Radius difference
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf", &diamMax);
 
-	// Densidad
+	// Density
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf %lf %lf", &rho_g, &rho_w, &rho_p);
 
-	// Tiempo de colisión
+	// Collision time
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf", &tColl);
 
-	// Epsilón y mu grano-grano
+	// Epsilon and mu grain-grain
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf %lf", &eps_gg, &mu_gg);
 
-	// Epsilón y mu grano-pared
+	// Epsilon and mu grain-wall
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf %lf", &eps_gw, &mu_gw);
 
-	// Epsilón y mu grano-plano
+	// Epsilon and mu grain-plane
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf %lf", &eps_gp, &mu_gp);
 
-	// Relación Kappa_t/Kappa_n; Gamma_t/Gamma_n; Mu_d/Mu_s
+	// Ratio kappa_t/kappa_n; gamma_t/gamma_n; mu_d/mu_s
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf %lf %lf", &xk_tn, &xg_tn, &xmu_ds);
 
-	// Paso de tiempo
+	// Time step
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf", &dt);
 
-	// Gap de impresión en dt's
+	// Print gap in dt's
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf", &gapFreq);
 
-	// Tiempo de simulación
+	// Simulation time
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf", &tRun);
 
-	// Tiempo transiente
+	// Transient time
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf", &tTrans);
 
-	// Velocidad inicial
+	// Initial velocity
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf", &v0);
 
-	// Ancho de la ventana de medición
+	// Measurement window width
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%lf", &winWidth);
 
-	// ¿Imprime snapshots?
+	// Print snapshots?
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%d", &snapFlag);
 
-	// Semilla para números aleatorios
+	// Random number seed
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%ld", &idum);
 
-	// Número de bins en el orificio
+	// Number of bins at the orifice
 	if (fgets(renglon, sizeof(renglon), stdin) == NULL) err_flag = 1;
 	else sscanf(renglon, "%ld", &nBinsHop);
 
 	if (err_flag)
 	{
-		printf("Error en el archivo (.data) de parámetros.\n");
+		printf("Error en el archivo (.data) de parÃ¡metros.\n");
 		exit (1);
 	}
 
 	if (siloThick < diamMax)
 	{
 		printf("Error: El espesor del silo no puede ser menor"
-			" que el diametro máximo de grano.\n");
+			" que el diametro mÃ¡ximo de grano.\n");
 		exit (2);
 	}
 
 	if (stat("DataFrames", &dirStat) == -1) mkdir("DataFrames", 0700);
 
-	/*+*+*+*+*+*+*+*+*+*+*+*+*+ PROPIEDADES +*+*+*+*+*+*+*+*+*+*+*+*+*/
+	/*+*+*+*+*+*+*+*+*+*+*+*+*+ PROPERTIES +*+*+*+*+*+*+*+*+*+*+*+*+*/
 
 	grain_prop *grainVec;
 	parameters pars;
@@ -378,7 +378,7 @@ int main()
 	double hopAngR, hopLength, radMin, radMax, siloInit;
 	FILE *fBit;
 
-	// Calcula masas promedio
+	// Compute average masses
 	radMin = diamMin/2.0;
 	radMax = diamMax/2.0;
 	deltaRad = (diamMax - diamMin)/2.0;
@@ -387,31 +387,31 @@ int main()
 	massAve_w = (4.0*PI/3.0)*radAve*radAve*radAve*rho_w;
 	massAve_p = (4.0*PI/3.0)*radAve*radAve*radAve*rho_p;
 
-	// Calcula kappa y gamma Grano-Grano
+	// Compute kappa and gamma Grain-Grain
 	mEff = massAve_g/2.0;
 	gamma_gg = -2.0*mEff*log(eps_gg)/tColl;
 	aux_0 = PI/tColl;
 	aux_1 = log(eps_gg)/tColl;
 	kappa_gg = mEff*(aux_0*aux_0 + aux_1*aux_1);
 
-	// Calcula kappa y gamma Grano-Pared
+	// Compute kappa and gamma Grain-Wall
 	mEff = massAve_g*massAve_w/(massAve_g + massAve_w);
 	gamma_gw = -2.0*mEff*log(eps_gw)/tColl;
 	aux_0 = PI/tColl;
 	aux_1 = log(eps_gw)/tColl;
 	kappa_gw = mEff*(aux_0*aux_0 + aux_1*aux_1);
 
-	// Calcula kappa y gamma Grano-Plano
+	// Compute kappa and gamma Grain-Plane
 	mEff = massAve_g*massAve_p/(massAve_g + massAve_p);
 	gamma_gp = -2.0*mEff*log(eps_gp)/tColl;
 	aux_0 = PI/tColl;
 	aux_1 = log(eps_gp)/tColl;
 	kappa_gp = mEff*(aux_0*aux_0 + aux_1*aux_1);
 
-	// Consigue memoria CPU-GPU en la MEMORIA UNIFICADA
+	// Get CPU-GPU memory in UNIFIED MEMORY
 	cudaSafeCall(cudaMallocManaged(&grainVec, ngrains*sizeof(grain_prop)));
 
-	// Calcula radios, masas, inercias y guarda
+	// Compute radii, masses, inertias and store
 	for (mm=0; mm<ngrains; mm++)
 	{
 		random = rannew64(&idum);
@@ -427,13 +427,13 @@ int main()
 		totMass += massG;
 	}
 
-	// Ahora calcula dimensiones del Hopper. El origen se
-	// encontrara a un bottGap del orificio.
+	// Now compute Hopper dimensions. The origin is
+	// located at a bottGap from the orifice.
 	hopAngR = hopAng*PI/180.0;
 	hopLength = 0.5*(siloWidth - hopWidth)/cos(hopAngR);
 	siloInit = hopLength*sin(hopAngR) + bottGap;
 
-	// Abre la bitacora e imprime propiedades
+	// Open the log and print properties
 	fBit = fopen("bitacora", "w");
 	fprintf(fBit, "Masa total (g) = %lf\n", totMass);
 	fprintf(fBit, "K_gg = %lf; K_gw = %lf; K_gp = %lf\n",
@@ -441,7 +441,7 @@ int main()
 	fprintf(fBit, "G_gg = %lf; G_gw = %lf; G_gp = %lf\n",
 		gamma_gg, gamma_gw, gamma_gp);
 
-	// Empaca parámetros
+	// Pack parameters
 	pars.siloWidth = siloWidth;
 	pars.siloHeight = siloHeight;
 	pars.siloThick = siloThick;
@@ -469,19 +469,19 @@ int main()
 	pars.bottGap = bottGap;
 	pars.winWidth = winWidth;
 
-	/*+*+*+*+*+*+*+*+*+*+*+*+*+ ESTADO INICIAL +*+*+*+*+*+*+*+*+*+*+*+*+*/
+	/*+*+*+*+*+*+*+*+*+*+*+*+*+ INITIAL STATE +*+*+*+*+*+*+*+*+*+*+*+*+*/
 
 	double3 *rrVec, *vvVec;
 	double3 *wwVec;
 	double xx, zz, shift, xxInit, zzInit, xxFin, zzFin, theta, phi;
 	long rowCounter;
 
-	// Consigue memoria CPU-GPU en la MEMORIA UNIFICADA
+	// Get CPU-GPU memory in UNIFIED MEMORY
 	cudaSafeCall(cudaMallocManaged(&rrVec, ngrains*sizeof(double3)));
 	cudaSafeCall(cudaMallocManaged(&vvVec, ngrains*sizeof(double3)));
 	cudaSafeCall(cudaMallocManaged(&wwVec, ngrains*sizeof(double3)));
 
-	// Los granos se colocan inicialmente en el silo.
+	// Grains are initially placed in the silo.
 	zz = siloInit;
 	shift = 1.05*radMax;
 	xxInit = shift;
@@ -491,7 +491,7 @@ int main()
 	xx = xxInit;
 	zz += zzInit;
 
-	// Hace un llenado inicial en formación hexagonal
+	// Perform an initial fill in hexagonal packing
 	mm = 0;
 	rowCounter = 0;
 
@@ -514,7 +514,7 @@ int main()
 		mm++;
 		if (mm == ngrains) break;
 
-		// Nuevo punto
+		// New point
 		xx += 2.0*shift;
 
 		if (xx < xxFin) continue;
@@ -526,13 +526,13 @@ int main()
 
 		if (zz > zzFin)
 		{
-			printf("Error: el número máximo de granos "
+			printf("Error: el nÃºmero mÃ¡ximo de granos "
 				"para este sistema es %ld\n", mm);
 			exit (3);
 		}
 	}
 
-	// Abre archivos
+	// Open files
 	FILE *fSnap, *fQflow;
 
 	if (snapFlag) fSnap = fopen("snapshots.xyz", "w");
@@ -540,7 +540,7 @@ int main()
 	fQflow = fopen("qflow.dat", "w");
 	fprintf(fQflow, "# Time\tQflow\n");
 
-	/*+*+*+*+*+*+*+*+*+*+*+*+*+ CELDAS +*+*+*+*+*+*+*+*+*+*+*+*+*/
+	/*+*+*+*+*+*+*+*+*+*+*+*+*+ CELLS +*+*+*+*+*+*+*+*+*+*+*+*+*/
 
 	long nCell_x, nCell_z, nCell2, nTags, nTot, nTouch;
 	double vertHeight, cellSide_x, cellSide_z, arMin;
@@ -548,35 +548,35 @@ int main()
 	/* Decide cuantas celdas poner. Usar celdas de diametros maximos (DIAMS).
 	DIAMS tiene que ser al menos 1. Estima cuantos granos van en celda */
 
-	// Número de celdas horizontales y verticales
+	// Number of horizontal and vertical cells
 	nCell_x = (long)(siloWidth/(DIAMS*2.0*radMax));
 	vertHeight = siloInit + siloHeight;
 	nCell_z = (long)(vertHeight/(DIAMS*2.0*radMax));
 	nCell2 = nCell_x*nCell_z;
 
-	// Calcula dimensiones
+	// Compute dimensions
 	cellSide_x = siloWidth/(double) nCell_x;
 	cellSide_z = vertHeight/(double) nCell_z;
-	arMin = PI*radMin*radMin; //área mínima
+	arMin = PI*radMin*radMin; // minimum area
 	aux_0 = cellSide_x + 2.0*radMax;
 	aux_1 = aux_0*(cellSide_z + 2.0*radMax);
 	aux_0 = aux_1/arMin;
 	nTags = (long) aux_0 + 1;
 	nTot = nCell2*nTags;
 
-	// Ahora calcua el número máximo de contactos en un grano
-	// calculando el número de diametrosMin (poligono regular)
-	// que caben en una circunferencia de radio radMax + radMin
+	// Now compute the maximum number of contacts for a grain
+	// by computing the number of diametrosMin (regular polygon)
+	// that fit in a circle of radius radMax + radMin
 	aux_0 = atan(radMin/(radMax + radMin));
 	nTouch = (long)(PI/aux_0) + 3;
 
-	// Escribe en la bitacora
+	// Write to the log
 	fprintf(fBit, "CellSide = (%lf, %lf)\n", cellSide_x, cellSide_z);
 	fprintf(fBit, "nCell = (%ld, %ld)\n", nCell_x, nCell_z);
 	fprintf(fBit, "nTags = %ld\n", nTags);
 	fprintf(fBit, "nTouch = %ld\n", nTouch);
 
-	// Empaca parámetros
+	// Pack parameters
 	pars.nCell_x = nCell_x;
 	pars.nCell_z = nCell_z;
 	pars.cellSide_x = cellSide_x;
@@ -586,7 +586,7 @@ int main()
 	pars.nTags = nTags;
 	pars.nTouch = nTouch;
 
-	/*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+ CORRE +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*/
+	/*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+ RUN +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*/
 
 	touch *d_touchVec;
 	int *d_idxReport;
@@ -600,7 +600,7 @@ int main()
 	long qflow = 0;
 	int flag, flagFin = 0;
 
-	// Calcula número de bloques e hilos
+	// Compute number of blocks and threads
 	ths = (ngrains < THS_MAX) ? nextPow2(ngrains) : THS_MAX;
 	blks = 1 + (ngrains - 1)/ths;
 
@@ -619,12 +619,12 @@ int main()
 	timeOld = 0.0;
 	clogTime = 0.0;
 
-	// Calcula el tamaño de los bins del orificio
+	// Compute the size of the orifice bins
 	binSize = hopWidth/(double) nBinsHop;
 	pars.binSize = binSize;
 	pars.nBinsHop = nBinsHop;
 
-	// Consigue memoria CPU-GPU y solo GPU (device)
+	// Get CPU-GPU memory and GPU-only (device) memory
 	cudaSafeCall(cudaMalloc(&d_nOcupVec, nCell2*sizeof(long)));
 	cudaSafeCall(cudaMalloc(&d_cellVec, nTot*sizeof(long)));
 	cudaSafeCall(cudaMalloc(&d_touchVec, totTouch*sizeof(touch)));
@@ -638,14 +638,14 @@ int main()
 	cudaSafeCall(cudaMallocManaged(&rrxProf, ngrains*sizeof(double)));
 	cudaSafeCall(cudaMallocManaged(&vvzProf, ngrains*sizeof(double)));
 
-	// Para contactos
+	// For contacts
 	cudaSafeCall(cudaMallocManaged(&nCntcVec, ngrains*sizeof(long)));
 	cudaSafeCall(cudaMallocManaged(&tagCntcVec, totTouch*sizeof(long)));
 	cudaSafeCall(cudaMallocManaged(&rrcCntcVec, totTouch*sizeof(double3)));
 	cudaSafeCall(cudaMallocManaged(&ffcCntcVec, totTouch*sizeof(double3)));
 
 
-	// Limpia vectores
+	// Clear vectors
 	cudaMemset(phiHist, 0, nBinsHop*sizeof(long));
 	cudaMemset(d_idxReport, 0, ngrains*sizeof(int));
 	cudaMemset(d_nOcupVec, 0, nCell2*sizeof(long));
@@ -660,7 +660,7 @@ int main()
 	cleanTouch<<<blksTouch, thsTouch>>>(d_touchVec, totTouch);
 	cudaCheckError();
 
-	// Localiza los granos en las celdas
+	// Locate grains in cells
 	cellLocate<<<blks, ths>>>(rrVec, d_nOcupVec, d_cellVec, pars);
 	cudaCheckError();
 
@@ -706,7 +706,7 @@ int main()
 			d_ttOldVec, d_ttNewVec, grainVec, pars);
 		cudaCheckError();
 
-		// Intercambia (new <--> old)
+		// Swap (new <--> old)
 		tmp_ff = d_ffOldVec;
 		d_ffOldVec = d_ffNewVec;
 		d_ffNewVec = tmp_ff;
@@ -715,7 +715,7 @@ int main()
 		d_ttOldVec = d_ttNewVec;
 		d_ttNewVec = tmp_tt;
 
-		// Aumenta el tiempo y actualiza
+		// Advance time and update
 		time += dt;
 
 		if (!flag)
@@ -724,7 +724,7 @@ int main()
 
 			printf("Simulado %.4f de %.4f s\n", time, totTime);
 
-			// Imprime en formato xyz para visualizar en Ovito
+			// Print in xyz format for visualization in Ovito
 			if (snapFlag) xyzOvPrint(fSnap, grainVec, rrVec, radMin,
 						radMax, pars);
 		}
@@ -750,7 +750,7 @@ int main()
 
 		if (flag) continue;
 
-		// Suma al histograma de phi
+		// Add to phi histogram
 		getPhi<<<blksBins, thsBins>>>(rrVec, grainVec, d_cellVec,
 			d_nOcupVec, phiHist, pars);
 		cudaCheckError();
@@ -759,12 +759,12 @@ int main()
 
 		cudaDeviceSynchronize();
 
-		// Imprime datos
+		// Print data
 		flagFin = dataPrint(grainVec, rrVec, vvVec, wwVec, nCntcVec,
 		tagCntcVec, rrcCntcVec, ffcCntcVec, pars, count);
 
-		// Finaliza si ya no hay granos en la tolva o si existe algun
-		// atasco (no pasan granos en 0.5 s)
+		// Stop if there are no grains in the hopper or if a jam
+		// exists (no grains pass in 0.5 s)
 		if (clogTime > 0.5)
 		{
 			printf("SE HA ATASCADO\n\n");
@@ -773,14 +773,14 @@ int main()
 
 		if (flagFin)
 		{
-			printf("NO HAY GRANOS EN LA VENTANA DE MEDICIÓN\n\n");
+			printf("NO HAY GRANOS EN LA VENTANA DE MEDICIÃ“N\n\n");
 			break;
 		}
 	}
 
 	cudaDeviceSynchronize();
 
-	/*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+ FINALIZA +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*/
+	/*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+ FINALIZE +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*/
 
 	double xx_b, xcount, rrx_p, vvz_p;
 	FILE *fPhi, *fVVprf, *fSnap_fin;
@@ -790,10 +790,10 @@ int main()
 
 	for (mm=0; mm<nBinsHop; mm++)
 	{
-		// Normaliza la distancia con el ancho del orificio
+		// Normalize distance by the orifice width
 		xx_b = ((double) mm + 0.5)*binSize/hopWidth;
 
-		// Promedia y escribe
+		// Average and write
 		xcount = 1.0/(double) count;
 		fprintf(fPhi, "%lf\t%lf\n", xx_b, phiHist[mm]*xcount);
 	}
@@ -810,11 +810,11 @@ int main()
 		fprintf(fVVprf, "%lf\t%lf\n", rrx_p, vvz_p);
 	}
 
-	// Imprime el ultimo snapchot en formato xyz
+	// Print the last snapshot in xyz format
 	fSnap_fin = fopen("last_snapshot.xyz", "w");
 	xyzOvPrint(fSnap_fin, grainVec, rrVec, radMin, radMax, pars);
 
-	// Cierra archivos
+	// Close files
 	fclose(fBit);
 	if (snapFlag) fclose(fSnap);
 	fclose(fPhi);
@@ -822,7 +822,7 @@ int main()
 	fclose(fSnap_fin);
 	fclose(fQflow);
 
-	// Libera memoria
+	// Free memory
 	cudaFree(grainVec);
 	cudaFree(rrVec);
 	cudaFree(vvVec);
@@ -848,3 +848,7 @@ int main()
 
 	exit (0);
 }
+
+
+
+

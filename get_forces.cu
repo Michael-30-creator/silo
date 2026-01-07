@@ -1,4 +1,4 @@
-#include "estructuras.h"
+﻿#include "estructuras.h"
 
 __device__ int force_and_torque(double3 rra, double3 vva, double3 wwa, double3 rrb,
 		double3 vvb, double3 wwb, double3 rrc, double3 nn, double comp,
@@ -14,7 +14,7 @@ __device__ int force_and_torque(double3 rra, double3 vva, double3 wwa, double3 r
 	long cc, idx;
 	int found_flag;
 
-	//Construye velocidades en el punto de contacto (v = w x r)
+	// Build velocities at the contact point (v = w x r)
 	vvac.x = vva.x + wwa.y*(rrc.z - rra.z) - wwa.z*(rrc.y - rra.y);
 	vvac.y = vva.y + wwa.z*(rrc.x - rra.x) - wwa.x*(rrc.z - rra.z);
 	vvac.z = vva.z + wwa.x*(rrc.y - rra.y) - wwa.y*(rrc.x - rra.x);
@@ -23,20 +23,20 @@ __device__ int force_and_torque(double3 rra, double3 vva, double3 wwa, double3 r
 	vvbc.y = vvb.y + wwb.z*(rrc.x - rrb.x) - wwb.x*(rrc.z - rrb.z);
 	vvbc.z = vvb.z + wwb.x*(rrc.y - rrb.y) - wwb.y*(rrc.x - rrb.x);
 
-	//Delta velocidades
+	// Velocity delta
 	dvc.x = vvbc.x - vvac.x;
 	dvc.y = vvbc.y - vvac.y;
 	dvc.z = vvbc.z - vvac.z;
 
-	//Magnitud dvcn = dvc * n
+	// Magnitude dvcn = dvc * n
 	dvcn = dvc.x*nn.x + dvc.y*nn.y + dvc.z*nn.z;
 
-	//Derivada de la distancia
+	// Distance derivative
 	comp_dot = -dvcn;
 
-	//Obtiene la Normal
+	// Compute the normal
 	normal = kappa*comp + gamma*comp_dot;
-	if (normal <= 0.0) return 0; //No hace nada si es atractiva
+	if (normal <= 0.0) return 0; // Do nothing if it is attractive
 
 	ff.x = -normal*nn.x;
 	ff.y = -normal*nn.y;
@@ -52,10 +52,10 @@ __device__ int force_and_torque(double3 rra, double3 vva, double3 wwa, double3 r
 		ptt->y = 0.0;
 		ptt->z = 0.0;
 
-		return 1; // Hasta aqui llega si no hay fricción
+		return 1; // Stops here if there is no friction
 	}
 
-	// Ahora la fricción
+	// Now friction
 	dvct.x = dvc.x - dvcn*nn.x;
 	dvct.y = dvc.y - dvcn*nn.y;
 	dvct.z = dvc.z - dvcn*nn.z;
@@ -64,7 +64,7 @@ __device__ int force_and_torque(double3 rra, double3 vva, double3 wwa, double3 r
 	kappa_t = xk*kappa;
 	gamma_t = xg*gamma;
 
-	// Evalua si ya existía un contacto y calcula f_t
+	// Check if a contact already existed and compute f_t
 	found_flag = 0;
 	for (cc=0; cc<nTouch; cc++)
 	{
@@ -76,17 +76,17 @@ __device__ int force_and_torque(double3 rra, double3 vva, double3 wwa, double3 r
 		zetaOld = touchVec[idx].zeta;
 		nnOld = touchVec[idx].nn;
 
-		// Obtiene el vector angulo de rotación (nn x nnOld)
+		// Get the rotation angle vector (nn x nnOld)
 		dOm.x = nn.y*nnOld.z - nn.z*nnOld.y;
 		dOm.y = nn.z*nnOld.x - nn.x*nnOld.z;
 		dOm.z = nn.x*nnOld.y - nn.y*nnOld.x;
 
-		// Ahora rota antes de actualizar (zeta = zetaOld +  zetaOld x dOm)
+		// Rotate before updating (zeta = zetaOld + zetaOld x dOm)
 		zeta.x = zetaOld.x + zetaOld.y*dOm.z - zetaOld.z*dOm.y;
 		zeta.y = zetaOld.y + zetaOld.z*dOm.x - zetaOld.x*dOm.z;
 		zeta.z = zetaOld.z + zetaOld.x*dOm.y - zetaOld.y*dOm.x;
 
-		// Actualiza
+		// Update
 		zeta.x += dvct.x*dt;
 		zeta.y += dvct.y*dt;
 		zeta.z += dvct.z*dt;
@@ -147,7 +147,7 @@ __device__ int force_and_torque(double3 rra, double3 vva, double3 wwa, double3 r
 		break;
 	}
 
-	// Si no existe lo crea
+	// If it does not exist, create it
 	if (!found_flag) for (cc=0; cc<nTouch; cc++)
 	{
 		idx = cc + ind*nTouch;
@@ -157,7 +157,7 @@ __device__ int force_and_torque(double3 rra, double3 vva, double3 wwa, double3 r
 		touchVec[idx].flag = 1;
 		touchVec[idx].tag = bb;
 
-		// Actualiza
+		// Update
 		zeta.x = dvct.x*dt;
 		zeta.y = dvct.y*dt;
 		zeta.z = dvct.z*dt;
@@ -195,14 +195,14 @@ __device__ int force_and_torque(double3 rra, double3 vva, double3 wwa, double3 r
 		break;	
 	}
 
-	// Si hay mas contactos de los espcificados detiene todos los hilos
+	// If there are more contacts than specified, stop all threads
 	if (!found_flag) asm("trap;");
 
 	ff.x += ff_tan.x;
 	ff.y += ff_tan.y;
 	ff.z += ff_tan.z;
 
-	//Calcula torque T = r x F
+	// Compute torque T = r x F
 	tt.x = (rrc.y - rra.y)*ff.z - (rrc.z - rra.z)*ff.y;
 	tt.y = (rrc.z - rra.z)*ff.x - (rrc.x - rra.x)*ff.z;
 	tt.z = (rrc.x - rra.x)*ff.y - (rrc.y - rra.y)*ff.x;
@@ -288,7 +288,7 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 				vvb.x = vvb.y = vvb.z = 0.0;
 				wwb.x = wwb.y = wwb.z = 0.0;
 
-				/*+*+*+*+* GRANO-PARED_IZQUIERDA +*+*+*+*/
+				/*+*+*+*+* GRAIN-LEFT_WALL +*+*+*+*/
 
 				if (bb == ngrains + 1)
 				{
@@ -311,7 +311,7 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 					goto FUERZA_TORQUE;
 				}
 
-				/*+*+*+*+* GRANO-PARED_DERECHA +*+*+*+*/
+				/*+*+*+*+* GRAIN-RIGHT_WALL +*+*+*+*/
 
 				if (bb == ngrains + 2)
 				{
@@ -334,14 +334,14 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 					goto FUERZA_TORQUE;
 				}
 
-				/*+*+*+*+* GRANO-TOLVA_IZQUIERDA +*+*+*+*/
+				/*+*+*+*+* GRAIN-HOPPER_LEFT +*+*+*+*/
 
 				if (bb == ngrains + 3)
 				{
-					// Pone en el origen de coordenadas
+					// Shift to origin coordinates
 					rrb = rrTolvVec[ind];
 
-					// Ahora checa distancias
+					// Now check distances
 					drr.x = rrb.x - rra.x;
 					drr.y = rrb.y - rra.y;
 					drr.z = rrb.z - rra.z;
@@ -362,13 +362,13 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 					goto FUERZA_TORQUE;
 				}
 
-				/*+*+*+*+* GRANO-TOLVA_DERECHA +*+*+*+*/
+				/*+*+*+*+* GRAIN-HOPPER_RIGHT +*+*+*+*/
 
 				if (bb == ngrains + 4)
 				{
 					rrb = rrTolvVec[ind];
 
-					// Ahora checa distancias
+					// Now check distances
 					drr.x = rrb.x - rra.x;
 					drr.y = rrb.y - rra.y;
 					drr.z = rrb.z - rra.z;
@@ -389,7 +389,7 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 					goto FUERZA_TORQUE;
 				}
 
-				/*+*+*+*+* GRANO-TECHO +*+*+*+*/
+				/*+*+*+*+* GRAIN-CEILING +*+*+*+*/
 				if (bb == ngrains + 7)
 				{
 					rrb.x = rra.x;
@@ -411,7 +411,7 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 					goto FUERZA_TORQUE;
 				}
 
-				/*+*+*+*+* GRANO-PISO +*+*+*+*/
+				/*+*+*+*+* GRAIN-FLOOR +*+*+*+*/
 //				if (bb == ngrains + 8)
 //				{
 //					rrb.x = rra.x;
@@ -437,7 +437,7 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 				gamma = gamma_gp;
 				mu = mu_gp;
 
-				/*+*+*+*+* GRANO-PLANO_POSTERIOR +*+*+*+*/
+				/*+*+*+*+* GRAIN-REAR_PLANE +*+*+*+*/
 				if (bb == ngrains + 5)
 				{
 					rrb.x = rra.x;
@@ -459,7 +459,7 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 					goto FUERZA_TORQUE;
 				}
 
-				/*+*+*+*+* GRANO-PLANO_FRONTAL +*+*+*+*/
+				/*+*+*+*+* GRAIN-FRONT_PLANE +*+*+*+*/
 				if (bb == ngrains + 6)
 				{
 					rrb.x = rra.x;
@@ -482,7 +482,7 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 				}
 			}
 
-			/*+*+*+*+*+*+*+*+*+* GRANO-GRANO +*+*+*+*+*+*+*+*+*/
+			/*+*+*+*+*+*+*+*+*+* GRAIN-GRAIN +*+*+*+*+*+*+*+*+*/
 
 			rrb = rrVec[bb];
 			vvb = vvVec[bb];
@@ -492,14 +492,14 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 			sum_radii = rad_a + rad_b;
 			sum_radii2 = sum_radii*sum_radii;
 
-			// Checa distancias
+			// Check distances
 			drr.x = rrb.x - rra.x;
 			drr.y = rrb.y - rra.y;
 			drr.z = rrb.z - rra.z;
 			dist2 = drr.x*drr.x + drr.y*drr.y + drr.z*drr.z;
 			if (dist2 >= sum_radii2) continue;
 
-			// Contacto
+			// Contact
 			dist = sqrt(dist2);
 			comp = sum_radii - dist;
 
@@ -507,7 +507,7 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 			nn.y = drr.y/dist;
 			nn.z = drr.z/dist;
 
-			// Punto de contacto
+			// Contact point
 			rrc.x = 0.5*(rra.x + rrb.x + (rad_a - rad_b)*nn.x);
 			rrc.y = 0.5*(rra.y + rrb.y + (rad_a - rad_b)*nn.y);
 			rrc.z = 0.5*(rra.z + rrb.z + (rad_a - rad_b)*nn.z);
@@ -542,3 +542,7 @@ __global__ void getForces(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 
 	return;
 }
+
+
+
+

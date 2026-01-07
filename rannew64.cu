@@ -1,24 +1,24 @@
 /* 
-  function rannew64: este es un generador de numeros aleatorios que usa
-  un fibonacci combinado con un congruencial. ambos se toman modulo 
-  2^64, simplemente por overflow.
-  funciona asi:
+  function rannew64: this is a random number generator that uses
+  a combined Fibonacci with a congruential. Both are taken modulo
+  2^64, simply by overflow.
+  It works as:
  
- 	x(n) = x(n-NP) - x(n-NQ) mod 2^64 (via overflow)
-  	y(n) = a*y(n-1) + c mod 2^64 (via overflow)
-  	z(n) = x(n) - y(n) mod 2^64 (via overflow)
+	x(n) = x(n-NP) - x(n-NQ) mod 2^64 (via overflow)
+	y(n) = a*y(n-1) + c mod 2^64 (via overflow)
+	z(n) = x(n) - y(n) mod 2^64 (via overflow)
 
-  si queremos devolver el idum se puede an~adir
+  If we want to return idum we can add
 
-  	idum(n) = z(n)/2 (usando >>)
+	idum(n) = z(n)/2 (using >>)
  
-  el periodo es (2^NP -  1)*2^(63) (aqui 63 es el numero de bits de 
-  precision menos 1). se corre usando unsigned long.
-  inicializa a la primera llamada y cada vez que tenga idum negativo. 
-  en principio, debe generar (poniendo cuidado a la inicializacion) 
-  2^((NP-1)(63)) ciclos disjuntos
+  The period is (2^NP - 1)*2^63 (here 63 is the number of bits of
+  precision minus 1). It runs using unsigned long.
+  It initializes on the first call and each time idum is negative.
+  In principle, it should generate (with careful initialization)
+  2^((NP-1)(63)) disjoint cycles.
 
-  los valores de NP y NQ ("taps") que se pueden usar se toman de Coddington:
+  The values of NP and NQ ("taps") that can be used are taken from Coddington:
 
   NP	NQ
 
@@ -35,14 +35,14 @@
   4423	2098
   9689	4187
 
-  se supone que mientras mas grandes los taps, mejores los numeros. 
-  (obviamente, mas largos los ciclos y mas ciclos).
+  It is assumed that larger taps give better numbers.
+  (obviously, longer cycles and more cycles).
 
-  se inicializa con un congruencial de mod 2^64 
-  distinto al que se usa en 
-  el genreador.
+  It initializes with a mod 2^64 congruential
+  different from the one used in
+  the generator.
 
-  ultima modificacion: marzo 6 2009
+  last modification: March 6 2009
 */
 
 
@@ -63,7 +63,7 @@ double rannew64(long *pidum)
   static int np = NP-1;
   static int nq = NQ-1;
 
-/* corre inicializacion */
+/* run initialization */
 
   idum = *pidum;
   if (not_init || (idum < 0))
@@ -72,7 +72,7 @@ double rannew64(long *pidum)
     /* unsigned long uaa = 69069, ucc = 1; */
     unsigned long uaa = 6364136223846793005, ucc = 1442695040888963407; 
 
-/* arregla idum en caso de problema. fija otros parametros */
+/* fix idum if needed. set other parameters */
 
     if (idum < 0) 
     { 
@@ -96,7 +96,7 @@ double rannew64(long *pidum)
     not_init = FALSE;
   }
 
-/* esta es la parte que hace el fibo */
+/* this is the part that does the Fibonacci */
 
   uux = useed[np] - useed[nq];
   useed[np] = uux;
@@ -105,16 +105,16 @@ double rannew64(long *pidum)
   if (np < 0) np = npp;
   if (nq < 0) nq = npp;
 
-/*ahora el congruencial*/
+/* now the congruential */
 
   uuy = ua*uuy + uc;
 
-/*combina*/
+/* combine */
 
   uu = uux - uuy;
 
-/*si queremos devolver el idum, lo reduce a long. esto se
-puede dejar comentado */
+/* if we want to return idum, reduce to long. this can be
+left commented */
 
   /*
   uu = uu>>1;

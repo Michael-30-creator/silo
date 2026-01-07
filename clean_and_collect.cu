@@ -1,4 +1,4 @@
-#include "estructuras.h"
+﻿#include "estructuras.h"
 
 __global__ void clean(double3 *ffVec, double3 *ttVec, grain_prop *grainVec,
 			long ngrains)
@@ -90,10 +90,10 @@ __global__ void cellLocate(double3 *rrVec, long *nOcupVec,
 
 		cellIndex = ii + jj*nCell_x;
 
-		// Agrega uno a n_ocup.
+		// Increment n_ocup by one.
 		shift = atomicAdd((int *)&nOcupVec[cellIndex], 1);
 
-		// Guarda índice de granos
+		// Store grain indices.
 		nTags = pars.nTags;
 		cellVec[cellIndex*nTags + shift] = ind;
 	}
@@ -125,13 +125,13 @@ __global__ void getPhi(double3 *rrVec, grain_prop *grainVec,long *cellVec,
 		nCell_x = pars.nCell_x;
 		nTags = pars.nTags;
 
-		// Ubica la posición del bin en el orificio
+		// Locate the bin position at the orifice.
 		xind = (double) ind;
 		rrbz = bottGap;
 		rrbx_i = 0.5*(siloWidth - hopWidth) + xind*binSize;
 		rrbx_f = rrbx_i + binSize;
 
-		// Encuentra entre que celdas se encuentra el bin
+		// Find which cells the bin spans.
 		cellSide_x = pars.cellSide_x;
 		iib_i = (long)(rrbx_i/cellSide_x);
 		iib_f = (long)(rrbx_f/cellSide_x);
@@ -139,11 +139,11 @@ __global__ void getPhi(double3 *rrVec, grain_prop *grainVec,long *cellVec,
 		cellSide_z = pars.cellSide_z;
 		jjb = (long)(rrbz/cellSide_z);
 
-		// Checa las celdas del vecindario
+		// Check neighboring cells.
 		for (iia = iib_i - 1; iia <= iib_f + 1; iia++)
 		for (jja = jjb - 1; jja <= jjb + 1; jja++)
 		{ 
-			// Busca los granos vecinos
+			// Search neighboring grains.
 			idx = iia + jja*nCell_x;
 			tag_init = idx*nTags;
 			tag_end = tag_init + nOcupVec[idx];
@@ -154,37 +154,37 @@ __global__ void getPhi(double3 *rrVec, grain_prop *grainVec,long *cellVec,
 				rra = rrVec[aa];
 				rad_a = grainVec[aa].rad;
 
-				// Evalua si esta fuera del rango
-				// vertical del bin
+				// Check if it is outside the range.
+				// bin vertical range.
 				if (rra.z <= rrbz - rad_a) continue;
 				if (rra.z >= rrbz + rad_a) continue;
 
-				// Evalua si esta dentro del rango
-				// horizontal del bin
+				// Check if it is inside the range.
+				// bin horizontal range.
 				if (rra.x > rrbx_i && rra.x < rrbx_f)
 				{
-					// Si esta dentro lo reporta
+					// If it is inside, report it.
 					phiHist[ind] += 1;
 
 					return;
 				}
 
-				// Evalua si esta fuera del rango
-				// horizontal del bin
+				// Check if it is outside the range.
+				// bin horizontal range.
 				if (rra.x <= rrbx_i - rad_a) continue;
 				if (rra.x >= rrbx_f + rad_a) continue;
 
-				// Calcula la semidistancia que esta
-				// en la linea del orifico
+				// Compute the half-distance that is
+				// on the orifice line.
 				rad2 = rad_a*rad_a;
 				h_dist = sqrt(rad2 - rra.z*rra.z);
 
-				// Ahora evalua si no toca el bin
+				// Now check if it does not touch the bin.
 				if (rra.x + h_dist < rrbx_i) continue;
 				if (rra.x - h_dist >= rrbx_f) continue;
 
-				// Si llega hasta aqui es que el grano
-				// toca al bin, asi que lo reporta
+				// If it gets here, the grain
+				// touches the bin, so report it.
 				phiHist[ind] += 1;
 
 				return;
@@ -217,3 +217,10 @@ __global__ void getVVprof(double3 *rrVec, double3 *vvVec,
 
 	return;
 }
+
+
+
+
+
+
+

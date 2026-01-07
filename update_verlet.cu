@@ -1,4 +1,4 @@
-#include "estructuras.h"
+﻿#include "estructuras.h"
 
 __global__ void verletInit(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 		double3 *ffVec, double3 *ttVec, grain_prop *grainVec,
@@ -32,7 +32,7 @@ __global__ void verletInit(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 		mass = grainVec[ind].mass;
 		inertia = grainVec[ind].inertia;
 
-		// Actualiza
+		// Update
 		rr.x += dt*(vv.x + hdt*ff.x/mass);
 		rr.y += dt*(vv.y + hdt*ff.y/mass);
 		rr.z += dt*(vv.z + hdt*ff.z/mass);
@@ -41,7 +41,7 @@ __global__ void verletInit(double3 *rrVec, double3 *vvVec, double3 *wwVec,
 		if (rrzOld > hopH && rr.z < hopH) idxReport[ind] = 1;
 		else idxReport[ind] = 0;
 
-		// Prediccion de velocidades
+		// Velocity prediction
 		vv.x += dt*ff.x/mass;
 		vv.y += dt*ff.y/mass;
 		vv.z += dt*ff.z/mass;
@@ -90,7 +90,7 @@ __global__ void verletFinish(double3 *vvVec, double3 *wwVec, double3 *ffOldVec,
 
 		hdt = 0.5*pars.dt;
 
-		// Corrige velocidades (incluyendo la angular)
+		// Correct velocities (including angular)
 		vv.x += hdt*(ffn.x - ffo.x)/mass;
 		vv.y += hdt*(ffn.y - ffo.y)/mass;	  
 		vv.z += hdt*(ffn.z - ffo.z)/mass;
@@ -106,3 +106,4 @@ __global__ void verletFinish(double3 *vvVec, double3 *wwVec, double3 *ffOldVec,
 
 	return;
 }
+
